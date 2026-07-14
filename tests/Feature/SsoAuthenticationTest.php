@@ -23,6 +23,24 @@ class SsoAuthenticationTest extends TestCase
             ->assertSee('assets/img/naboo-logo-white.svg', false);
     }
 
+    public function test_authenticated_user_opening_root_is_sent_to_workspace_selector(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('home'))
+            ->assertRedirect(route('workspaces.index'));
+    }
+
+    public function test_authenticated_user_cannot_loop_between_login_and_root(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('login'))
+            ->assertRedirect(route('workspaces.index'));
+    }
+
     public function test_user_with_one_workspace_is_redirected_with_a_single_use_code(): void
     {
         $user = User::factory()->create([
