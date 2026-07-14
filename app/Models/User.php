@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -21,7 +23,11 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'email_verified_at',
         'password',
+        'is_active',
+        'google_id',
+        'avatar_url',
     ];
 
     /**
@@ -44,6 +50,26 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    public function workspaces(): BelongsToMany
+    {
+        return $this->belongsToMany(Workspace::class)
+            ->withPivot('is_active')
+            ->withTimestamps();
+    }
+
+    public function activeWorkspaces(): BelongsToMany
+    {
+        return $this->workspaces()
+            ->where('workspaces.is_active', true)
+            ->wherePivot('is_active', true);
+    }
+
+    public function ssoCodes(): HasMany
+    {
+        return $this->hasMany(SsoCode::class);
     }
 }
