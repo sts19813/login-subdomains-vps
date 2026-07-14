@@ -1,8 +1,8 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "sts19813/login-subdomains-vps",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "Portal central de autenticación SSO para los subdominios de Naboo.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
