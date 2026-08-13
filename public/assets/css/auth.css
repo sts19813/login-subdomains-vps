@@ -374,6 +374,132 @@ input {
     gap: 12px;
 }
 
+.workspace-entry {
+    display: grid;
+    gap: 6px;
+}
+
+.workspace-billing-link {
+    display: inline-flex;
+    align-items: center;
+    justify-self: end;
+    gap: 7px;
+    padding: 0 4px;
+    color: #69717d;
+    font-size: .75rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot-ok {
+    background: #2fba7b;
+}
+
+.status-dot-warning {
+    background: #ef8b36;
+}
+
+.billing-status-row,
+.billing-line,
+.billing-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.billing-status-row {
+    margin-bottom: 14px;
+    color: #69717d;
+    font-size: .84rem;
+    font-weight: 700;
+}
+
+.status-pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: .73rem;
+}
+
+.status-pill-ok {
+    color: #176b45;
+    background: #eaf9f2;
+}
+
+.status-pill-warning {
+    color: #9a4d12;
+    background: #fff2e7;
+}
+
+.billing-breakdown {
+    overflow: hidden;
+    margin-bottom: 14px;
+    border: 1px solid var(--naboo-border);
+    border-radius: 12px;
+}
+
+.billing-line {
+    padding: 15px 16px;
+    border-bottom: 1px solid #eceef1;
+    font-size: .86rem;
+}
+
+.billing-line > span {
+    display: grid;
+    gap: 3px;
+}
+
+.billing-line small {
+    color: var(--naboo-muted);
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+.billing-total {
+    padding: 17px 16px;
+    background: #fafbfc;
+    font-size: .9rem;
+}
+
+.billing-total strong {
+    color: var(--naboo-primary);
+    font-size: 1.08rem;
+}
+
+.billing-meta {
+    margin: 0 0 22px;
+    color: var(--naboo-muted);
+    font-size: .75rem;
+    line-height: 1.55;
+    text-align: center;
+}
+
+.billing-contact {
+    margin-top: 0;
+    padding: 20px;
+}
+
+.billing-secondary-action {
+    margin-top: 10px;
+}
+
+.btn-disabled {
+    color: #969da8;
+    border-color: #e5e8ec;
+    cursor: not-allowed;
+    background: #f3f4f6;
+}
+
+.btn-disabled:hover {
+    transform: none;
+}
+
 .workspace-card {
     display: flex;
     width: 100%;

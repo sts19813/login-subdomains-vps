@@ -4,29 +4,21 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\SsoCode;
-use App\Models\Workspace;
+use App\Services\BillingAccessService;
+use App\Services\WorkspaceClientAuthenticator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class SsoExchangeController extends Controller
 {
-    public function __invoke(Request $request): JsonResponse
-    {
-        $clientId = (string) ($request->getUser() ?: $request->input('client_id', ''));
-        $clientSecret = (string) ($request->getPassword() ?: $request->input('client_secret', ''));
-
-        if ($clientId === '' || $clientSecret === '' || strlen($clientSecret) > 255) {
-            return $this->error('invalid_client', 'Las credenciales del cliente no son válidas.', 401);
-        }
-
-        $workspace = Workspace::query()
-            ->where('client_id', $clientId)
-            ->where('is_active', true)
-            ->first();
-
-        if (! $workspace || ! Hash::check($clientSecret, $workspace->client_secret_hash)) {
+    public function __invoke(
+        Request $request,
+        WorkspaceClientAuthenticator $authenticator,
+        BillingAccessService $billingAccess,
+    ): JsonResponse {
+        $workspace = $authenticator->fromRequest($request);
+        if (! $workspace) {
             return $this->error('invalid_client', 'Las credenciales del cliente no son válidas.', 401);
         }
 
@@ -34,7 +26,7 @@ class SsoExchangeController extends Controller
             'code' => ['required', 'string', 'size:80'],
         ]);
 
-        $payload = DB::transaction(function () use ($validated, $workspace): ?array {
+        $payload = DB::transaction(function () use ($validated, $workspace, $billingAccess): ?array {
             $authorizationCode = SsoCode::query()
                 ->with('user')
                 ->where('code_hash', hash('sha256', $validated['code']))
@@ -48,6 +40,7 @@ class SsoExchangeController extends Controller
                 || $authorizationCode->expires_at->isPast()
                 || ! $authorizationCode->user?->is_active
                 || ! $authorizationCode->user->activeWorkspaces()->whereKey($workspace->getKey())->exists()
+                || ! $billingAccess->canAccess($authorizationCode->user, $workspace)
             ) {
                 return null;
             }
@@ -62,6 +55,11 @@ class SsoExchangeController extends Controller
                 'avatar_url' => $user->avatar_url,
                 'email_verified' => $user->email_verified_at !== null,
                 'workspace' => $workspace->slug,
+                'billing' => [
+                    'subscription_status' => $workspace->subscription_status,
+                    'access_allowed' => true,
+                    'grace_ends_at' => $workspace->billing_grace_ends_at?->toIso8601String(),
+                ],
             ];
         });
 

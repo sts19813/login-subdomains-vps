@@ -104,6 +104,32 @@ Respuesta:
 
 Consulta [la guía de integración de Naboo](docs/NABOO_CLIENT_INTEGRATION.md) y [la guía de despliegue](docs/DEPLOYMENT.md).
 
+## Suscripciones por instancia
+
+El portal central también controla la suscripción mensual de cada espacio:
+
+- Propiedad sin renta activa: `$20.00 MXN` al mes por defecto.
+- Propiedad rentada: `$40.00 MXN` al mes por defecto.
+- Una propiedad es rentada únicamente cuando tiene `tenant_id` y al menos un cargo abierto (`pending`, `partial` o `in_validation`).
+- Stripe Checkout registra la tarjeta y crea una suscripción con cobro automático mensual.
+- Los webhooks habilitan, ponen en tolerancia o suspenden el acceso; el navegador nunca decide el estado.
+- Los precios, días de tolerancia, responsables de pago y excepciones son configurables por espacio.
+
+Configura un espacio existente y asigna a su responsable:
+
+```bash
+php artisan billing:configure tipi --vacant=20 --rented=40 --grace=5 --email=facturacion@example.com --enable
+php artisan billing:access admin@example.com tipi --manager
+```
+
+Permite que un administrador específico conserve acceso aunque falle el pago:
+
+```bash
+php artisan billing:access soporte@example.com tipi --override
+```
+
+Consulta [la guía de facturación con Stripe](docs/STRIPE_BILLING.md) para el webhook y el paso de sandbox a producción.
+
 ## Validación
 
 ```bash

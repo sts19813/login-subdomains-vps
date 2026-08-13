@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Route;
@@ -32,5 +33,13 @@ Route::middleware('auth')->group(function (): void {
     Route::post('/espacios/{workspace:slug}/entrar', [WorkspaceController::class, 'launch'])
         ->middleware('throttle:20,1')
         ->name('workspaces.launch');
+    Route::get('/espacios/{workspace:slug}/suscripcion', [BillingController::class, 'show'])
+        ->name('billing.show');
+    Route::post('/espacios/{workspace:slug}/suscripcion/checkout', [BillingController::class, 'checkout'])
+        ->middleware('throttle:10,1')
+        ->name('billing.checkout');
+    Route::post('/espacios/{workspace:slug}/suscripcion/portal', [BillingController::class, 'portal'])
+        ->middleware('throttle:10,1')
+        ->name('billing.portal');
     Route::post('/logout', [LoginController::class, 'destroy'])->name('logout');
 });

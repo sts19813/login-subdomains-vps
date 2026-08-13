@@ -31,5 +31,17 @@ class AppServiceProvider extends ServiceProvider
 
             return Limit::perMinute(30)->by($clientId.'|'.$request->ip());
         });
+
+        RateLimiter::for('billing-usage', function (Request $request): Limit {
+            $clientId = (string) ($request->getUser() ?: $request->input('client_id', 'unknown'));
+
+            return Limit::perMinute(12)->by($clientId.'|'.$request->ip());
+        });
+
+        RateLimiter::for('billing-entitlement', function (Request $request): Limit {
+            $clientId = (string) ($request->getUser() ?: $request->input('client_id', 'unknown'));
+
+            return Limit::perMinute(120)->by($clientId.'|'.$request->ip());
+        });
     }
 }

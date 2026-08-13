@@ -79,6 +79,25 @@ class SsoExchangeTest extends TestCase
         $this->assertNull(SsoCode::query()->where('workspace_id', $workspace->id)->firstOrFail()->consumed_at);
     }
 
+    public function test_code_cannot_be_exchanged_after_subscription_access_is_revoked(): void
+    {
+        [$workspace, , $plainCode] = $this->authorization();
+        $workspace->forceFill([
+            'billing_enforced' => true,
+            'property_count' => 1,
+            'metrics_reported_at' => now(),
+            'subscription_status' => 'past_due',
+            'billing_grace_ends_at' => now()->subMinute(),
+        ])->save();
+
+        $this->withBasicAuth($workspace->client_id, 'workspace-secret')
+            ->postJson(route('api.sso.exchange'), ['code' => $plainCode])
+            ->assertStatus(422)
+            ->assertJsonPath('error', 'invalid_grant');
+
+        $this->assertNull(SsoCode::query()->firstOrFail()->consumed_at);
+    }
+
     private function authorization($expiresAt = null): array
     {
         $workspace = Workspace::query()->create([

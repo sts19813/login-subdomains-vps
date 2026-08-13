@@ -127,6 +127,88 @@ class CentralSsoController extends Controller
 
 El cliente no crea usuarios ni roles automáticamente. La identidad debe existir localmente y conservar sus permisos específicos de Tipi o Tayde.
 
+## Reporte de consumo para la suscripción
+
+Cada instancia debe enviar su medición al portal central después de crear/cambiar propiedades o cobranza, y al menos una vez al día. Se reutilizan las credenciales SSO de servidor a servidor.
+
+La consulta de referencia para Naboo es:
+
+```php
+use App\Models\Charge;
+use App\Models\Property;
+
+$propertyCount = Property::query()->count();
+
+$rentedPropertyCount = Property::query()
+    ->whereNotNull('tenant_id')
+    ->whereHas('charges', function ($query): void {
+        $query->whereIn('status', [
+            Charge::STATUS_PENDING,
+            Charge::STATUS_PARTIAL,
+            Charge::STATUS_IN_VALIDATION,
+        ]);
+    })
+    ->count();
+```
+
+Envía el resultado:
+
+```php
+$response = Http::asJson()
+    ->acceptJson()
+    ->withBasicAuth(
+        config('services.central_sso.client_id'),
+        config('services.central_sso.client_secret'),
+    )
+    ->timeout(10)
+    ->post(rtrim(config('services.central_sso.url'), '/').'/api/billing/usage', [
+        'property_count' => $propertyCount,
+        'rented_property_count' => $rentedPropertyCount,
+        'measured_at' => now()->utc()->toIso8601String(),
+    ]);
+
+$response->throw();
+```
+
+El central no acepta que la instancia indique precios ni importes. Esos valores se aplican desde la configuración central. Las mediciones de más de siete días, fechas futuras y conteos donde `rented_property_count > property_count` son rechazados.
+
+## Validar sesiones locales que ya están abiertas
+
+El control al emitir e intercambiar el código SSO evita nuevos accesos, pero una sesión local existente debe volver a consultar su derecho de acceso. Añade un middleware en Naboo y guarda el resultado en caché durante un máximo de cinco minutos:
+
+```php
+$entitlement = Cache::remember(
+    'central-billing-entitlement:'.$request->user()->sso_subject,
+    now()->addMinutes(5),
+    fn () => Http::asJson()
+        ->acceptJson()
+        ->withBasicAuth(
+            config('services.central_sso.client_id'),
+            config('services.central_sso.client_secret'),
+        )
+        ->timeout(5)
+        ->post(rtrim(config('services.central_sso.url'), '/').'/api/billing/entitlement', [
+            'user_sub' => (string) $request->user()->sso_subject,
+        ])
+        ->throw()
+        ->json(),
+);
+
+if (! ($entitlement['access_allowed'] ?? false)) {
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->away(
+        rtrim(config('services.central_sso.url'), '/').'/login?'.http_build_query([
+            'workspace' => config('services.central_sso.workspace'),
+        ]),
+    );
+}
+```
+
+El endpoint considera la suscripción, la tolerancia y `billing_access_override` para ese usuario. No almacenes la respuesta más allá de cinco minutos y no expongas las credenciales SSO en JavaScript.
+
 ## Cambio en el login
 
 El botón principal del login local puede apuntar a `route('sso.login')`. Conserva temporalmente el formulario local como acceso de emergencia hasta validar el despliegue central.

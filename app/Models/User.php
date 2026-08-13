@@ -57,7 +57,7 @@ class User extends Authenticatable
     public function workspaces(): BelongsToMany
     {
         return $this->belongsToMany(Workspace::class)
-            ->withPivot('is_active')
+            ->withPivot('is_active', 'is_billing_manager', 'billing_access_override')
             ->withTimestamps();
     }
 

@@ -50,4 +50,47 @@ class SsoProvisioningCommandTest extends TestCase
 
         $this->assertDatabaseEmpty('workspaces');
     }
+
+    public function test_billing_commands_configure_prices_and_user_permissions(): void
+    {
+        $this->artisan('sso:workspace', [
+            'slug' => 'tipi',
+            'name' => 'Tipi',
+            'base_url' => 'https://tipi.naboo.cloud',
+            'callback_url' => 'https://tipi.naboo.cloud/sso/callback',
+        ])->assertSuccessful();
+        $this->artisan('sso:user', [
+            'email' => 'billing@example.com',
+            '--password' => 'secret123',
+        ])->assertSuccessful();
+        $this->artisan('sso:grant', [
+            'email' => 'billing@example.com',
+            'workspace' => 'tipi',
+        ])->assertSuccessful();
+
+        $this->artisan('billing:configure', [
+            'workspace' => 'tipi',
+            '--vacant' => '25.50',
+            '--rented' => '45',
+            '--grace' => '7',
+            '--email' => 'pagos@example.com',
+            '--enable' => true,
+        ])->assertSuccessful();
+        $this->artisan('billing:access', [
+            'email' => 'billing@example.com',
+            'workspace' => 'tipi',
+            '--manager' => true,
+            '--override' => true,
+        ])->assertSuccessful();
+
+        $workspace = Workspace::query()->where('slug', 'tipi')->firstOrFail();
+        $membership = $workspace->users()->where('email', 'billing@example.com')->firstOrFail()->pivot;
+        $this->assertSame(2550, $workspace->vacant_property_unit_amount);
+        $this->assertSame(4500, $workspace->rented_property_unit_amount);
+        $this->assertSame(7, $workspace->billing_grace_days);
+        $this->assertSame('pagos@example.com', $workspace->billing_email);
+        $this->assertTrue($workspace->billing_enforced);
+        $this->assertSame(1, $membership->is_billing_manager);
+        $this->assertSame(1, $membership->billing_access_override);
+    }
 }

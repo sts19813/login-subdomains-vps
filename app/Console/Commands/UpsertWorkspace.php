@@ -14,7 +14,9 @@ class UpsertWorkspace extends Command
         {name : Nombre visible}
         {base_url : URL principal HTTPS}
         {callback_url : Callback SSO HTTPS del subdominio}
-        {--rotate-secret : Reemplaza el secreto si el espacio ya existe}';
+        {--rotate-secret : Reemplaza el secreto si el espacio ya existe}
+        {--enable-billing : Exige suscripción en un espacio existente}
+        {--disable-billing : No exige suscripción en este espacio}';
 
     protected $description = 'Crea o actualiza un espacio autorizado para recibir inicios de sesión';
 
@@ -36,6 +38,7 @@ class UpsertWorkspace extends Command
         }
 
         $workspace = Workspace::query()->where('slug', $slug)->first();
+        $isNew = ! $workspace;
         $mustGenerateCredentials = ! $workspace || $this->option('rotate-secret');
         $plainSecret = $mustGenerateCredentials ? Str::random(64) : null;
 
@@ -47,6 +50,19 @@ class UpsertWorkspace extends Command
             'callback_url' => $callbackUrl,
             'is_active' => true,
         ]);
+
+        if ($this->option('enable-billing') && $this->option('disable-billing')) {
+            $this->error('Usa solo --enable-billing o --disable-billing.');
+
+            return self::FAILURE;
+        }
+
+        if ($isNew || $this->option('enable-billing')) {
+            $workspace->billing_enforced = true;
+        }
+        if ($this->option('disable-billing')) {
+            $workspace->billing_enforced = false;
+        }
 
         if (! $workspace->client_id) {
             $workspace->client_id = 'naboo_'.$slug.'_'.Str::lower(Str::random(20));
