@@ -44,9 +44,15 @@ SESSION_SAME_SITE=lax
 SESSION_DOMAIN=null
 
 SSO_CODE_TTL_SECONDS=60
+
+STRIPE_KEY=pk_test_...
+STRIPE_SECRET=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 `SESSION_DOMAIN=null` mantiene la cookie central limitada a `naboo.cloud`; no debe compartirse con los subdominios.
+
+Empieza con claves `*_test_`. Configura el webhook descrito en [STRIPE_BILLING.md](STRIPE_BILLING.md) antes de habilitar el cobro de un espacio.
 
 ## 3. Preparar y activar
 

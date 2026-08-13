@@ -11,10 +11,18 @@ use Illuminate\Support\Str;
 
 class SsoBroker
 {
+    public function __construct(private readonly BillingAccessService $billingAccess) {}
+
     public function redirect(User $user, Workspace $workspace, Request $request): RedirectResponse
     {
         abort_unless($user->is_active && $workspace->is_active, 403);
         abort_unless($user->activeWorkspaces()->whereKey($workspace->getKey())->exists(), 403);
+
+        if (! $this->billingAccess->canAccess($user, $workspace)) {
+            return redirect()
+                ->route('billing.show', $workspace)
+                ->withErrors(['billing' => 'La suscripción de este espacio requiere atención antes de continuar.']);
+        }
 
         SsoCode::query()
             ->where('expires_at', '<', now()->subDay())

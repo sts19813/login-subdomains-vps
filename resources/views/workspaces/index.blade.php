@@ -20,7 +20,8 @@
     @else
         <div class="workspace-list">
             @foreach ($workspaces as $workspace)
-                <form method="POST" action="{{ route('workspaces.launch', $workspace) }}">
+                <div class="workspace-entry">
+                    <form method="POST" action="{{ route('workspaces.launch', $workspace) }}">
                     @csrf
                     <button type="submit" class="workspace-card">
                         <span class="workspace-mark">{{ mb_strtoupper(mb_substr($workspace->name, 0, 1)) }}</span>
@@ -30,7 +31,14 @@
                         </span>
                         <span class="workspace-arrow" aria-hidden="true">→</span>
                     </button>
-                </form>
+                    </form>
+                    @if ($workspace->billing_enforced)
+                        <a class="workspace-billing-link" href="{{ route('billing.show', $workspace) }}">
+                            Suscripción
+                            <span class="status-dot {{ $workspace->subscriptionProvidesAccess() ? 'status-dot-ok' : 'status-dot-warning' }}"></span>
+                        </a>
+                    @endif
+                </div>
             @endforeach
         </div>
     @endif
