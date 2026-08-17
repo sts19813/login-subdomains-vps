@@ -38,7 +38,7 @@ class Workspace extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-            ->withPivot('is_active', 'is_billing_manager', 'billing_access_override')
+            ->withPivot('is_active', 'can_sync_identity', 'is_billing_manager', 'billing_access_override')
             ->withTimestamps();
     }
 

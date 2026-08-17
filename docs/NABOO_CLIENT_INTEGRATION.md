@@ -9,6 +9,7 @@ CENTRAL_SSO_URL=https://naboo.cloud
 CENTRAL_SSO_WORKSPACE=tipi
 CENTRAL_SSO_CLIENT_ID=
 CENTRAL_SSO_CLIENT_SECRET=
+CENTRAL_SSO_SYNC_USERS=true
 ```
 
 Para Tayde cambia `CENTRAL_SSO_WORKSPACE=tayde` y utiliza las credenciales emitidas para Tayde.
@@ -125,7 +126,17 @@ class CentralSsoController extends Controller
 }
 ```
 
-El cliente no crea usuarios ni roles automáticamente. La identidad debe existir localmente y conservar sus permisos específicos de Tipi o Tayde.
+El callback no crea usuarios ni roles locales. La cuenta debe existir en la
+instancia y conservar ahí sus permisos específicos de Tipi o Tayde.
+
+## Aprovisionamiento automático
+
+Las instancias pueden crear o actualizar la identidad central con
+`POST /api/sso/provision`, autenticándose con las mismas credenciales privadas
+del workspace. El endpoint vincula la identidad al workspace que realizó la
+petición; no permite conceder acceso a otro espacio. Las instancias envían el
+hash local compatible de la contraseña, nunca la contraseña en texto plano, y
+guardan el `user.sub` devuelto para posteriores actualizaciones sin duplicados.
 
 ## Reporte de consumo para la suscripción
 

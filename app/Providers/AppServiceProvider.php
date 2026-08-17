@@ -32,6 +32,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(30)->by($clientId.'|'.$request->ip());
         });
 
+        RateLimiter::for('sso-provision', function (Request $request): Limit {
+            $clientId = (string) ($request->getUser() ?: $request->input('client_id', 'unknown'));
+
+            return Limit::perMinute(300)->by($clientId.'|'.$request->ip());
+        });
+
         RateLimiter::for('billing-usage', function (Request $request): Limit {
             $clientId = (string) ($request->getUser() ?: $request->input('client_id', 'unknown'));
 

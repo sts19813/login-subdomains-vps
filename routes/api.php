@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\BillingEntitlementController;
 use App\Http\Controllers\Api\SsoExchangeController;
+use App\Http\Controllers\Api\SsoProvisionController;
 use App\Http\Controllers\Api\StripeWebhookController;
 use App\Http\Controllers\Api\WorkspaceUsageController;
 use Illuminate\Support\Facades\Route;
@@ -9,6 +10,10 @@ use Illuminate\Support\Facades\Route;
 Route::post('/sso/exchange', SsoExchangeController::class)
     ->middleware('throttle:sso-exchange')
     ->name('api.sso.exchange');
+
+Route::post('/sso/provision', SsoProvisionController::class)
+    ->middleware('throttle:sso-provision')
+    ->name('api.sso.provision');
 
 Route::post('/billing/usage', WorkspaceUsageController::class)
     ->middleware('throttle:billing-usage')
